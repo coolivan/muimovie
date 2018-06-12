@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html>
+
+	<head>
+		<meta charset="utf-8">
+		<title>Hello MUI</title>
+		<meta name="viewport" content="width=device-width, initial-scale=1,maximum-scale=1,user-scalable=no">
+		<meta name="apple-mobile-web-app-capable" content="yes">
+		<meta name="apple-mobile-web-app-status-bar-style" content="black">
+
+		<link rel="stylesheet" href="../css/mui.min.css">
+		<link rel="stylesheet" type="text/css" href="../css/style.css" />
+	</head>
+
+	<body>
+		<header class="mui-bar mui-bar-nav">
+			<a class="mui-action-back mui-icon mui-icon-left-nav mui-pull-left"></a>
+			<h1 class="mui-title">豆瓣Top100</h1>
+		</header>
+		<div id="billboard" class="mui-content">
+				<div id="tabNav" class="mui-segmented-control mui-segmented-control-inverted">
+					<a class="mui-control-item mui-active" tabindex="0" href="#item1">Top1-50</a>
+					<a class="mui-control-item" tabindex="1" href="#item2">Top51-100</a>
+				</div>
+				<div class="coming">
+					<div id="item1" class="mui-slider-item mui-control-content mui-active">
+						<ul class="mui-table-view">
+							<li class="mui-table-view-cell" v-for="(item,index) in movies" v-if="index < 50" @tap="open_detail(item)">
+								<img class="mui-pull-left" :src="item.cover">
+								<div class="mui-media-body">
+									<div>
+										<span class="black-big">{{item.title}} </span>
+										<span class="orange-medium mui-pull-right">NO.{{item.sort}}</span>
+									</div>
+					                <div>
+					                	<span class="orange-small" v-if="item.score>0">评分:{{item.score}}</span>
+					                	<span class="orange-small" v-else>评分:暂无</span>
+					                </div>
+					                <div class="grey-small">导演：{{item.directors}}</div>
+					                <div class="grey-small mui-ellipsis">主演：{{item.casts}}</div>
+								</div>
+							</li>
+							
+						</ul>
+					</div>
+					<div id="item2" class="mui-slider-item mui-control-content">
+						<ul class="mui-table-view">
+							<li class="mui-table-view-cell" v-for="(item,index) in movies" v-if="index > 49" @tap="open_detail(item)">
+								<img class="mui-pull-left" :src="item.cover">
+								
+								<div class="mui-media-body">
+									<div>
+										<span class="black-big">{{item.title}} </span>
+										<span class="orange-medium mui-pull-right">NO.{{item.sort}}</span>
+									</div>
+					                <div>
+					                	<span class="orange-small" v-if="item.score>0">评分:{{item.score}}</span>
+					                	<span class="orange-small" v-else>评分:暂无</span>
+					                </div>
+					                <div class="grey-small">导演：{{item.directors}}</div>
+					                <div class="grey-small mui-ellipsis">主演：{{item.casts}}</div>
+									
+								</div>
+							</li>
+						</ul>
+					</div>
+				</div>
+
+		</div>
+	</body>
+	<script src="../js/mui.min.js"></script>
+	<script src="../js/vue.min.js" type="text/javascript" charset="utf-8"></script>
+	<script>
+	
+		mui.init({
+			swipeBack: true //启用右滑关闭功能
+		});
+		
+	
+		var data_movies = new Vue({
+			el:'#billboard',
+			data:{
+				movies:[],
+			},
+			methods:{
+				open_detail:function(item){
+					mui.openWindow({
+						url:'./movie-detail.html',
+						id:'movie-detail',
+						extras:{
+							movieId: item.id
+						},
+					    show:{
+					      autoShow:false
+					    }
+					});					
+                }
+			}
+		});
+		
+		mui.plusReady(function(){
+			
+			var self = plus.webview.currentWebview();
+			    
+			
+			self.addEventListener('hide',function(e){
+				window.scrollTo(0,0);
+				data_detail.resetData();
+			});
+			plus.nativeUI.showWaiting();
+			
+			mui.getJSON('https://api.douban.com/v2/movie/top250',{
+				start:0,
+				count:100
+			},function (res) {				
+				data_movies.movies = convertJson(res.subjects);
+				plus.nativeUI.closeWaiting();
+				mui.currentWebview.show();
+			});
+			
+			
+		});		
+		
+
+		//转换数据
+		function convertJson (items) {
+			var newItems = [];
+			
+			items.forEach(function(item,index){
+				
+				var directors = '';
+				for (var i=0;i<item.directors.length;i++) {
+					directors += item.directors[i].name;
+					if(i != item.directors.length - 1){
+						directors += ' / '
+					}
+				}
+				var casts = '';
+				for (var i=0;i<item.casts.length;i++) {
+					casts += item.casts[i].name;
+					if(i != item.casts.length - 1){
+						casts += ' / '
+					}
+				}
+				
+				newItems.push({
+					sort:index+1,
+					id:item.id,
+					title:item.title,
+					cover:item.images.medium,
+					score:item.rating.average,
+					directors:directors,
+					casts:casts
+				})
+			})
+			return newItems
+		}
+
+	</script>
+
+</html>

@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html>
+
+	<head>
+		<meta charset="utf-8">
+		<title>Hello MUI</title>
+		<meta name="viewport" content="width=device-width, initial-scale=1,maximum-scale=1,user-scalable=no">
+		<meta name="apple-mobile-web-app-capable" content="yes">
+		<meta name="apple-mobile-web-app-status-bar-style" content="black">
+
+		<link rel="stylesheet" href="../css/mui.min.css">
+		<link rel="stylesheet" type="text/css" href="../css/style.css"/>
+	</head>
+
+	<body>
+		<div id="detail">
+			<header class="mui-bar mui-bar-nav">
+			    <a class="mui-action-back mui-icon mui-icon-left-nav mui-pull-left"></a>
+			    <h1 class="mui-title">{{title}}</h1>
+			</header>
+			<div class="mui-content">
+				<div class="banner">
+				      <img :src="cover"/>
+				</div>
+				<div class="header">
+					<div class="mui-pull-left">
+						<div class="dark-big title">{{title}}</div>
+						<div class="grey-small">{{year}} / {{countries}}</div>
+						<div class="grey-small">{{directors}}</div>
+					</div>
+					<div class="mui-pull-right mark">
+						<div class="grey-micro">豆瓣评分</div>
+						<div class="orange-big">{{score}}</div>
+						<div class="grey-micro">{{reviews}}人</div>						
+					</div>
+				</div>
+				<div class="description">
+					<p class="grey-small">剧情简介</p>
+					<p class="black-medium">{{summary}}</p>
+			
+				</div>
+				<div class="casts">
+					<p class="grey-small">演员</p>
+					<ul>
+						<li v-for="item in casts" @tap="open_detail(item)">
+							<img :src="item.avatars.medium"/>
+							<div class="black-micro mui-ellipsis">{{item.name}}</div>
+						</li>
+					
+					</ul>					
+				</div>
+				<div class="comments">
+					<div class="title black-medium">评论</div>
+					<ul class="mui-table-view">
+					    <li class="mui-table-view-cell mui-media">
+					        <a href="javascript:;">
+					            <img class="mui-media-object mui-pull-left" src="http://placehold.it/40x30">
+					            <div class="mui-media-body">
+				            		<span class="black-medium">{{title}}</span>
+				            		<span class="grey-medium mui-pull-right">2018-10-11</span>
+				                
+					                <p class="black-medium mui-ellipsis">{{summary}}</p>
+					            </div>
+					        </a>
+					    </li>
+					  
+					</ul>
+				</div>
+				
+			</div>
+		</div>
+	</body>
+	<script src="../js/mui.min.js"></script>
+	<script src="../js/vue.min.js"></script>
+	<script>
+		mui.init({
+			swipeBack:true //启用右滑关闭功能
+		});
+		
+		function getDefaultData(){
+			return{
+				title:'',
+				cover:'',
+				score:'',
+				reviews:'',
+				summary:'',
+				countries:'',
+				year:'',
+				genres:'',
+				casts:[],
+				directors:[]
+			}
+		}
+		
+		var data_detail = new Vue({
+			el:'#detail',
+			data:getDefaultData(),
+			methods:{
+				//重置数据
+				resetData:function(){
+					obect.assign(this.$data,getDefaultData());
+				},
+                open_detail:function(item){
+					mui.openWindow({
+						url:'./cast-detail.html',
+						id:'cast-detail',
+						extras:{
+							castId: item.id
+						},
+						show:{
+							autoShow:false
+						}
+					});
+                }
+
+			}
+		});		
+		
+		
+		
+		
+		mui.plusReady(function(){
+			var self = plus.webview.currentWebview(),
+			    id = self.movieId;
+			    
+//			    alert('movieId:' + id);
+			
+			self.addEventListener('hide',function(e){
+				window.scrollTo(0,0);
+				data_detail.resetData();
+			});
+			
+//			plus.nativeUI.showWaiting('加载中',{
+//				width:'100px',
+//				height:'100px'
+//			});			
+			plus.nativeUI.showWaiting();
+			
+			mui.getJSON('https://api.douban.com/v2/movie/subject/'+id,function(res){
+				data_detail.title = res.title;
+				data_detail.cover = res.images.large;
+				data_detail.score = res.rating.average;
+				data_detail.reviews = res.reviews_count;
+				data_detail.summary = res.summary;
+				data_detail.countries = res.countries.toString('/,/g','/');
+				data_detail.year = res.year;
+				data_detail.genres = res.genres.toString('/,/g','/');
+				data_detail.casts = res.casts;
+				data_detail.directors = res.directors[0].name;
+				plus.nativeUI.closeWaiting();
+				mui.currentWebview.show();
+			});
+			
+			
+						
+			
+		})
+
+	</script>
+</html>

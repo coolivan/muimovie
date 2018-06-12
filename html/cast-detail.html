@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html>
+
+	<head>
+		<meta charset="utf-8">
+		<title>Hello MUI</title>
+		<meta name="viewport" content="width=device-width, initial-scale=1,maximum-scale=1,user-scalable=no">
+		<meta name="apple-mobile-web-app-capable" content="yes">
+		<meta name="apple-mobile-web-app-status-bar-style" content="black">
+
+		<link rel="stylesheet" href="../css/mui.min.css">
+		<link rel="stylesheet" type="text/css" href="../css/style.css"/>
+	</head>
+
+	<body>
+		<div id="cast">
+			<header class="mui-bar mui-bar-nav">
+			    <a class="mui-action-back mui-icon mui-icon-left-nav mui-pull-left"></a>
+			    <h1 class="mui-title">{{name}}</h1>
+			</header>
+			<div class="mui-content">
+				<div class="banner">
+				      <img :src="cover"/>
+				</div>
+				<div class="header">
+					<div class="dark-big title">{{name}}</div>
+					<div class="grey-small">{{enName}}</div>
+				</div>
+				<div class="description">
+					<p class="grey-small">个人简介</p>
+					<p class="black-medium">{{summary}}</p>			
+				</div>
+				<div class="works">
+					<p class="grey-small">代表作品</p>
+					<ul>
+						<li v-for="item in works" @tap="open_detail(item)">
+							<img :src="item.subject.images.medium"/>
+							<div class="black-micro mui-ellipsis">{{item.subject.title}}</div>
+							<div class="orange-medium">{{item.subject.rating.average}}</div>
+						</li>
+					
+					</ul>					
+				</div>
+				<div class="comments">
+					<div class="title black-medium">评论</div>
+					<ul class="mui-table-view">
+					    <li class="mui-table-view-cell mui-media">
+					        <a href="javascript:;">
+					            <img class="mui-media-object mui-pull-left" src="http://placehold.it/40x30">
+					            <div class="mui-media-body">
+				            		<span class="black-medium">{{name}}</span>
+				            		<span class="grey-medium mui-pull-right">2018-10-11</span>
+				                
+					                <p class="black-medium mui-ellipsis">{{summary}}</p>
+					            </div>
+					        </a>
+					    </li>
+					  
+					</ul>
+				</div>
+				
+			</div>
+		</div>
+	</body>
+	<script src="../js/mui.min.js"></script>
+	<script src="../js/vue.min.js"></script>
+	<script>
+		mui.init({
+			swipeBack:true //启用右滑关闭功能
+		});
+		
+		function getDefaultData(){
+			return{
+				name:'',
+				enName:'',
+				cover:'',
+				summary:'',
+				works:[]				
+			}
+		}
+		
+		var data_detail = new Vue({
+			el:'#cast',
+			data:getDefaultData(),
+			methods:{
+				//重置数据
+				resetData:function(){
+					obect.assign(this.$data,getDefaultData());
+				},				
+                open_detail:function(item){
+					mui.openWindow({
+						url:'./movie-detail.html',
+						id:'movie-detail',
+						extras:{
+							movieId: item.subject.id
+						},
+						createNew:true
+					});	
+                }				
+			}
+		});		
+		
+		
+		
+		
+		mui.plusReady(function(){
+			var self = plus.webview.currentWebview(),
+			    id = self.castId;
+			    
+//			    alert('castId' + id);
+			
+			self.addEventListener('hide',function(e){
+				window.scrollTo(0,0);
+				data_detail.resetData();
+			});
+			
+			plus.nativeUI.showWaiting();
+			
+			mui.getJSON('https://api.douban.com/v2/movie/celebrity/'+id,function(res){
+				data_detail.name = res.name;
+				data_detail.enName = res.name_en;
+				data_detail.cover = res.avatars.large;
+				data_detail.summary = res.name+'， '+res.gender+'，'+res.born_place;
+				data_detail.works = res.works;
+				plus.nativeUI.closeWaiting();
+				mui.currentWebview.show();
+			});
+			
+						
+			
+		})
+
+	</script>
+</html>
